@@ -92,7 +92,7 @@ def merge-conflict [root: string, stversions: string, file: string] {
     let st_dir = ($st | path join ($original | path dirname | path relative-to $root))
     print $"st_dir  = ($st_dir)"
 
-    let latest_backup = (latest-backup $original)
+    let latest_backup = (latest-backup $root $stversions $original)
 
     if ($latest_backup | is-empty) {
         print "No backup found."
@@ -126,7 +126,7 @@ def merge-conflict [root: string, stversions: string, file: string] {
 
 
 
-def latest-backup [original: string] {
+def latest-backup [root: string, stversions: string, original: string] {
 
     let relative = ($original | path relative-to $root)
     let stem = ($relative | path parse | get stem)
