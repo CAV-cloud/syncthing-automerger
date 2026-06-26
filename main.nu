@@ -1,8 +1,8 @@
 #!/usr/bin/env nu
 
-def cleanup-stversions [] {
+def cleanup-stversions [root: string, stversions: string] {
   let st_conflicts = (
-      ^fd --hidden --type file sync-conflict $"($ROOT)/($STVERSIONS)"
+      ^fd --hidden --type file sync-conflict $"($root)/($stversions)"
       | lines
   )
 
@@ -18,11 +18,11 @@ def cleanup-stversions [] {
   print ""
 }
 
-def find-conflicts [] {
+def find-conflicts [root: string, stversions: string] {
   print "Searching for Syncthing conflict files..."
 
   let conflicts = (
-      ^fd  --hidden  --type file  sync-conflict  $ROOT  --exclude $STVERSIONS
+      ^fd  --hidden  --type file  sync-conflict  $root  --exclude $stversions
       | lines
   )
 
@@ -36,8 +36,7 @@ def find-conflicts [] {
   print ""
 }
 
-def merge-conflict [file: string] {
-
+def merge-conflict [root: string, stversions: string, file: string] {
     print "----------------------------------------"
     print $"Conflict file: ($file)"
 
@@ -67,7 +66,7 @@ def merge-conflict [file: string] {
         return
     }
 
-    let st = ($ROOT | path join $STVERSIONS)
+    let st = ($root | path join $stversions)
 
     print $"Looking for .stversions:"
     print $"  ($st)"
@@ -77,7 +76,7 @@ def merge-conflict [file: string] {
       print ".stversions exists."
     }
 
-    let relative = ($original | path relative-to $ROOT)
+    let relative = ($original | path relative-to $root)
     print $"relative = ($relative)"
 
 
@@ -90,7 +89,7 @@ def merge-conflict [file: string] {
     print "Contents:"
 
 
-    let st_dir = ($st | path join ($original | path dirname | path relative-to $ROOT))
+    let st_dir = ($st | path join ($original | path dirname | path relative-to $root))
     print $"st_dir  = ($st_dir)"
 
     let latest_backup = (latest-backup $original)
@@ -129,14 +128,14 @@ def merge-conflict [file: string] {
 
 def latest-backup [original: string] {
 
-    let relative = ($original | path relative-to $ROOT)
+    let relative = ($original | path relative-to $root)
     let stem = ($relative | path parse | get stem)
     let ext = ($relative | path parse | get extension)
 
     let st_dir = (
-        $ROOT
-        | path join $STVERSIONS
-        | path join ($original | path dirname | path relative-to $ROOT)
+        $root
+        | path join $stversions
+        | path join ($original | path dirname | path relative-to $root)
     )
 
     ^fd --hidden --type file . $st_dir
@@ -159,13 +158,13 @@ def main [
 
   # TODO error message if not existing:
   # eprintln!("Notes directory {} does not exist", notes_path);
-  let ROOT = $d
-  let STVERSIONS = ".stversions"
+  let root = $d
+  let stversions = ".stversions"
 
-  print $"Watching directory: ($ROOT)"
+  print $"Watching directory: ($root)"
   print ""
 
-  cleanup-stversions
+  cleanup-stversions $root $stversions
 
   (
   ^inotifywait
@@ -173,14 +172,14 @@ def main [
     --recursive
     # TODO All required events?
     -e create
-    -e moved_to $ROOT
+    -e moved_to $root
   | lines
   | each {|event|
       print $event
 
-      find-conflicts
+      find-conflicts $root $stversions
       | each {|file|
-          merge-conflict $file
+          merge-conflict $root $stversions $file
       }
 
       print "Automerging done!"
