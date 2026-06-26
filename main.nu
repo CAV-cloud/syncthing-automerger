@@ -1,16 +1,5 @@
 #!/usr/bin/env nu
 
-# ----------------------------
-# Configuration
-# ----------------------------
-
-let ROOT = "/home/caspar/org"
-let STVERSIONS = ".stversions"
-
-
-# TODO error message if not existing:
-        # eprintln!("Notes directory {} does not exist", notes_path);
-
 def cleanup-stversions [] {
   let st_conflicts = (
       ^fd --hidden --type file sync-conflict $"($ROOT)/($STVERSIONS)"
@@ -163,8 +152,16 @@ def latest-backup [original: string] {
     | last
 }
 
-def main [] {
+def main [
+    -d: string
+] {
   print $"Running Syncthing automerger"
+
+  # TODO error message if not existing:
+  # eprintln!("Notes directory {} does not exist", notes_path);
+  let ROOT = $d
+  let STVERSIONS = ".stversions"
+
   print $"Watching directory: ($ROOT)"
   print ""
 
