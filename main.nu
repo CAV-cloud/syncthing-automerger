@@ -32,8 +32,7 @@ def find-conflicts [root: string, stversions: string] {
   | each {|f|
       print $"  ($f)"
   }
-
-  print ""
+  $conflicts
 }
 
 def merge-conflict [root: string, stversions: string, file: string] {
@@ -114,14 +113,13 @@ def merge-conflict [root: string, stversions: string, file: string] {
         } | complete
     )
 
-    if $result.exit_code != 0 {
-        print "Merge failed!"
-        print $result.stderr
-    }
-    if $result.exit_code == 0 {
-      rm $file
-      print "Merge succeeded."
-    }
+if $result.exit_code > 1 {
+    print "Merge failed!"
+    print $result.stderr
+} else {
+    rm $file
+    print $"Merged and removed ($file)"
+}
 }
 
 
@@ -179,6 +177,7 @@ def main [
 
       find-conflicts $root $stversions
       | each {|file|
+          print $"MERGING: ($file)"
           merge-conflict $root $stversions $file
       }
 
