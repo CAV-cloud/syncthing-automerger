@@ -139,8 +139,7 @@ def latest-backup [root: string, stversions: string, original: string] {
     ^fd --hidden --type file . $st_dir
     | lines
     | where {|f|
-        ($f | str contains $"($stem)~")
-        and ($f | str ends-with $".($ext)")
+        (($f | str contains $"($stem)~") and ($f | str ends-with $".($ext)"))
     }
     | where {|f|
         (($f | path basename | split row "~") | length) == 2
